@@ -3,11 +3,20 @@ using UnityEngine;
 
 public class DestroyAndActivateAfterDelay : MonoBehaviour
 {
-    public GameObject objectToActivate;  // Object to activate after delay
-    public float delayBeforeHide = 1f;    // Time to wait before hiding scissors
-    public float delayBeforeActivate = 2f; // Time after collision to activate next object
-    public GameObject scissorVisual;      // Visual part of scissors (optional)
+    public GameObject objectToActivate;  
+    public float delayBeforeHide = 1f;   
+    public float delayBeforeActivate = 2f; 
+    public GameObject scissorVisual;     
 
+    public AudioSource audioSource; 
+    public AudioClip audioClip;
+
+
+    private void Start()
+    {
+        audioSource = GetComponent<AudioSource>();
+        audioSource.clip = audioClip;
+    }
     private void OnTriggerEnter(Collider other)
     {
         StartCoroutine(HandleDestroyAndActivate());
@@ -17,20 +26,18 @@ public class DestroyAndActivateAfterDelay : MonoBehaviour
     {
         Debug.Log("Collision detected, starting sequence!");
 
-        // 🕐 Wait BEFORE hiding scissors
         yield return new WaitForSeconds(delayBeforeHide);
 
-        // 🔥 Hide visuals
         if (scissorVisual != null)
         {
+        Debug.Log("scissorVisual.SetActive(false)");
             scissorVisual.SetActive(false);
+            audioSource.Play();
         }
         
-        // 🔥 Disable collider immediately after hide
         Collider col = GetComponent<Collider>();
         if (col != null) col.enabled = false;
 
-        // 🔥 Freeze Rigidbody
         Rigidbody rb = GetComponent<Rigidbody>();
         if (rb != null)
         {
@@ -38,14 +45,12 @@ public class DestroyAndActivateAfterDelay : MonoBehaviour
             rb.velocity = Vector3.zero;
         }
 
-        // 🕐 Wait more until activation
         float extraWait = delayBeforeActivate - delayBeforeHide;
         if (extraWait > 0f)
         {
             yield return new WaitForSeconds(extraWait);
         }
 
-        // 🎯 Activate the next object
         if (objectToActivate != null)
         {
             objectToActivate.SetActive(true);
@@ -56,7 +61,6 @@ public class DestroyAndActivateAfterDelay : MonoBehaviour
             Debug.LogWarning("No object assigned to activate!");
         }
 
-        // 🧹 Finally destroy the scissors object
         Destroy(gameObject);
         Debug.Log("Scissors destroyed completely!");
     }
